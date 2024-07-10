@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
 const { PrismaClient } = require('@prisma/client')
-
+app.use(express.json());
 
 const prisma = new PrismaClient()
 const port = 8080
@@ -53,7 +53,6 @@ app.post('/api/users', async (req, res) => {
 
       res.status(201).json(newUser); 
   } catch (error) {
-      console.error('Failed to create user:', error);
       res.status(500).json({ error: 'Failed to create user' });
   }
 });
@@ -275,19 +274,18 @@ app.get('/api/menu-items/:id', async (req,res) => {
 
 // create menu item 
 
-// app.post('/api/menu-item', async (req, res) => {
-//   const { name, description, price, available } = req.body;
-//   try {
-//       const newItem = await prisma.menuItem.create({
-//           data: { name, description, price, available }
-//       });
-//       res.json(newItem);
-//   } catch (error) {
-//       res.status(500).json({ error: 'Failed to create menu item' });
-//   }
-// });
-
+app.post('/api/menu-items', async (req, res) => {
+  const { name, description, price, available } = req.body;
+  try {
+      const newItem = await prisma.menuItem.create({
+          data: { name, description, price, available }
+      });
+      res.json(newItem);
+  } catch (error) {
+      res.status(500).json({ error: 'Failed to create menu item' });
+  }
+});
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`App listening on port ${port}`)
 })
