@@ -1,7 +1,14 @@
 const express = require('express')
 const app = express()
 const { PrismaClient } = require('@prisma/client')
+const cors = require("cors");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const SECRET_KEY = 'wellness';
+
 app.use(express.json());
+
+app.use(cors());
 
 const prisma = new PrismaClient()
 const port = 8080
@@ -38,22 +45,48 @@ app.get('/api/user/:id', async (req,res) => {
   }
 });
 
-// create new user 
+// create new user - register 
 
-app.post('/api/users', async (req, res) => {
+app.post('/api/users/register', async (req, res) => {
   const { name, email, password } = req.body;
   try {
+      const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = await prisma.user.create({
           data: {
               name,
               email,
-              password,
+              password: hashedPassword,
           },
       });
 
       res.status(201).json(newUser); 
   } catch (error) {
       res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+// login user 
+
+app.post('/api/users/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+      const user = await prisma.user.findUnique({
+          where: { email },
+      });
+      if (!user) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+      }
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      const token = jwt.sign({ userId: user.id }, SECRET_KEY, { expiresIn: '1h' });
+
+      res.json({ token, userId: user.id, name: user.name, email: user.email });
+  } catch (error) {
+      res.status(500).json({ error: 'Failed to login this user' });
   }
 });
 
