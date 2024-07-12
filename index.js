@@ -179,6 +179,59 @@ app.get('/api/sauna-bookings', async (req, res) => {
       }
   });
 
+
+// create sauna booking for a user 
+
+app.post('/api/sauna-bookings', async (req, res) => {
+  const { userId, saunaRoomId, date, timeSlot } = req.body;
+  try {
+      const newBooking = await prisma.saunaBooking.create({
+          data: { userId, saunaRoomId, date: new Date(date), timeSlot }
+      });
+      res.json(newBooking);
+  } catch (error) {
+      res.status(500).json({ error: 'Failed to create sauna booking' });
+  }
+});
+
+// get all sauna rooms 
+
+app.get('/api/sauna-rooms', async (req, res) => {
+  try {
+    const saunaRooms = await prisma.saunaRoom.findMany();
+    res.json(saunaRooms);
+  } catch (error) {
+    console.error('Failed to fetch sauna rooms:', error);
+    res.status(500).json({ error: 'Failed to fetch sauna rooms' });
+  }
+});
+
+// get all available saunarooms 
+
+app.get('/api/sauna-rooms/available', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+
+    const availableRooms = await prisma.saunaRoom.findMany({
+      where: {
+        bookings: {
+          none: {
+            date: {
+              gte: today,
+            },
+          },
+        },
+      },
+    });
+
+    res.json(availableRooms);
+  } catch (error) {
+    console.error('Error fetching available sauna rooms:', error); 
+    res.status(500).json({ error: 'Failed to fetch available sauna rooms' });
+  }
+});
+
 // get sauna booking by userId
 
 app.get('/api/user/:userId/sauna-bookings', async (req, res) => {
