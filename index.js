@@ -17,6 +17,35 @@ app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
+// VERIFY TOKEN // 
+
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  console.log('Authorization Header:', authHeader);
+
+  if (!authHeader) {
+    return res.status(403).send({ error: 'No token provided.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  console.log('Token:', token);
+
+  if (!token) {
+    return res.status(403).send({ error: 'No token provided.' });
+  }
+
+  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+    if (err) {
+      console.log('Token verification error:', err);
+      return res.status(500).send({ error: 'Failed to authenticate token.' });
+    }
+
+    req.userId = decoded.userId;
+    console.log('Decoded User ID:', decoded.userId);
+    next();
+  });
+};
+
  //// USERS ROUTES SECTION ////
 
 // get all users 
@@ -31,17 +60,17 @@ app.get('/api/users', async (req,res) => {
 
 // get user by ID 
 
-app.get('/api/user/:id', async (req,res) => {
-  const { id } = req.params; 
+app.get('/api/user', verifyToken, async (req, res) => {
+  const { userId } = req;
   try {
-    const user = await prisma.user.findUnique({ where: {id:parseInt(id)}});
+    const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
     if (user) {
       res.json(user);
     } else {
-      res.status(404).json({ error: "User not found"});
+      res.status(404).json({ error: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({error: "Failed to fetch user"});
+    res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
 
@@ -119,13 +148,26 @@ app.get('/api/gym-bookings', async (req,res) => {
 
 app.post('/api/gym-bookings', async (req, res) => {
   const { userId, date, timeSlot } = req.body;
+  console.log('Received Data:', { userId, date, timeSlot }); // Log received data for debugging
+
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
   try {
-      const newBooking = await prisma.gymBooking.create({
-          data: { userId, date: new Date(date), timeSlot }
-      });
-      res.json(newBooking);
+    const newBooking = await prisma.gymBooking.create({
+      data: {
+        user: {
+          connect: { id: userId }
+        },
+        date: new Date(date),
+        timeSlot
+      }
+    });
+    res.json(newBooking);
   } catch (error) {
-      res.status(500).json({ error: 'Failed to create gym booking' });
+    console.error('Error creating gym booking:', error);
+    res.status(500).json({ error: 'Failed to create gym booking' });
   }
 });
 
@@ -371,6 +413,9 @@ app.post('/api/menu-items', async (req, res) => {
       res.status(500).json({ error: 'Failed to create menu item' });
   }
 });
+
+
+module.exports = verifyToken;
 
 app.listen(port, () => {
   console.log(`App listening on port ${port}`)
