@@ -227,12 +227,26 @@ app.get('/api/sauna-bookings', async (req, res) => {
 app.post('/api/sauna-bookings', async (req, res) => {
   const { userId, saunaRoomId, date, timeSlot } = req.body;
   try {
-      const newBooking = await prisma.saunaBooking.create({
-          data: { userId, saunaRoomId, date: new Date(date), timeSlot }
-      });
-      res.json(newBooking);
+    const existingBooking = await prisma.saunaBooking.findFirst({
+      where: {
+        saunaRoomId,
+        date: new Date(date),
+        timeSlot
+      }
+    });
+
+    if (existingBooking) {
+      return res.status(400).json({ error: 'Sorry! Unfortunately this time slot is already booked.' });
+    }
+
+    // Create new booking if the time slot is available
+    const newBooking = await prisma.saunaBooking.create({
+      data: { userId, saunaRoomId, date: new Date(date), timeSlot }
+    });
+    res.json(newBooking);
   } catch (error) {
-      res.status(500).json({ error: 'Failed to create sauna booking' });
+    console.error('Failed to create sauna booking:', error); // Log the error details
+    res.status(500).json({ error: 'Failed to create sauna booking' });
   }
 });
 
