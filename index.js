@@ -239,13 +239,13 @@ app.post('/api/sauna-bookings', async (req, res) => {
       return res.status(400).json({ error: 'Sorry! Unfortunately this time slot is already booked.' });
     }
 
-    // Create new booking if the time slot is available
+    // Create's the new booking if the time slot is available for the user
     const newBooking = await prisma.saunaBooking.create({
       data: { userId, saunaRoomId, date: new Date(date), timeSlot }
     });
     res.json(newBooking);
   } catch (error) {
-    console.error('Failed to create sauna booking:', error); // Log the error details
+    console.error('Failed to create sauna booking:', error); 
     res.status(500).json({ error: 'Failed to create sauna booking' });
   }
 });
@@ -325,6 +325,19 @@ app.get('/api/sauna-room/:saunaRoomId/bookings', async (req, res) => {
       res.json(bookings);
   } catch (error) {
       res.status(500).json({ error: 'Failed to fetch sauna bookings' });
+  }
+});
+
+// cancel the booking 
+app.delete('/api/sauna-bookings/:id', verifyToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedBooking = await prisma.saunaBooking.delete({
+      where: { id: parseInt(id) },
+    });
+    res.json(deletedBooking);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to cancel the booking' });
   }
 });
 
