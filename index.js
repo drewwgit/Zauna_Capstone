@@ -207,6 +207,19 @@ app.get('/api/user/:userId/gym-bookings', async (req, res) => {
   }
 });
 
+// cancel gym booking by ID
+
+app.delete('/api/gym-bookings/:id', verifyToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedBooking = await prisma.gymBooking.delete({
+      where: { id: parseInt(id) },
+    });
+    res.json(deletedBooking);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to cancel the booking' });
+  }
+});
 
     //// SAUNA ROOM ROUTES 
 
