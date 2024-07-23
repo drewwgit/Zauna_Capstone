@@ -58,6 +58,7 @@ model MenuItem {
   description String
   price       Float
   available   Boolean
+  imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orderItems  OrderItem[]

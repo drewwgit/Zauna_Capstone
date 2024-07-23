@@ -446,7 +446,7 @@ app.post('/api/menu-items', async (req, res) => {
   const { name, description, price, available } = req.body;
   try {
       const newItem = await prisma.menuItem.create({
-          data: { name, description, price, available }
+          data: { name, description, price, available, imageUrl }
       });
       res.json(newItem);
   } catch (error) {
