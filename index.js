@@ -411,6 +411,27 @@ app.post('/api/orders', async (req,res) => {
   }
 });
 
+// delete order 
+
+app.delete('/api/orders/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedOrder = await prisma.order.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.json({ message: 'Order deleted successfully', deletedOrder });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    if (error.meta && error.meta.cause === 'Record to delete does not exist.') {
+      res.status(404).json({ error: 'Order not found' });
+    } else {
+      res.status(500).json({ error: 'Failed to delete order' });
+    }
+  }
+});
+
     //// MENU ITEMS //// 
 
 // get all menu items 
