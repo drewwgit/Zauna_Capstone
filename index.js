@@ -13,9 +13,14 @@ app.use(cors());
 const prisma = new PrismaClient()
 const port = 8080
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+// app.get('/', (req, res) => {
+//   res.send('Hello World!')
+// })
+
+const pathToDist = __dirname + "/../client/dist";
+
+app.use('/', express.static(pathToDist));
+
 
 // VERIFY TOKEN // 
 
